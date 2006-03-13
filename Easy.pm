@@ -6,13 +6,28 @@ use warnings;
 use Carp;
 use Mail::Sender;
 use File::Spec;
-use Sys::Hostname::FQDN;
+
+my $hostname_code = sub {
+    require POSIX;
+    return (POSIX::uname())[1];  
+};
+
+if(!eval {
+        require Sys::Hostname::FQDN;
+        $hostname_code = \&Sys::Hostname::FQDN::fqdn;
+        return 1;
+}){
+    eval {
+       require Net::Domain;
+       $hostname_code = \&Net::Domain::hostfqdn;
+    }
+}
 
 require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(email);
 
-use version;our $VERSION = qv('0.0.1');
+use version;our $VERSION = qv('0.0.2');
 
 sub email { Mail::Sender->new()->easy(shift()); }
 
@@ -24,10 +39,10 @@ sub Mail::Sender::easy {
     my $attachments = delete $mail_ref->{'_attachments'};
 
     my $time = time;
-    my $user = getpwuid($<);
-    my $eusr = getpwuid($>);
+    my $user = $^O eq 'MSWin32' ? "(Windows: $<)" : getpwuid($<);
+    my $eusr = $^O eq 'MSWin32' ? "(Windows: $>)" : getpwuid($>);
     my $file = File::Spec->rel2abs($0);
-    my $host = Sys::Hostname::FQDN::fqdn();
+    my $host = $hostname_code->();
  
     my @siteheaders = (
         qq{X-Mailer: use SimpleMood; - Sent via the email() function or easy() method of Mail/Sender/Easy.pm and/or SimpleMood.pm both by Daniel Muey.},
@@ -68,7 +83,7 @@ sub Mail::Sender::easy {
             $sndr->OpenMultipart($mail_ref);
             $sndr->Body({
                 'ctype' => 'text/plain',
-#                'msg'   => $text,
+#               'msg'   => $text,
             });
             $sndr->SendLineEnc($text);
         } 
@@ -273,7 +288,7 @@ None by default. email() is exportable
 
 =head1 EXAMPLE
 
-Send an email via SMTP with authentication, on an alternate port, a plain text part, html part that has an inline smiley image, a PDF attachment, a high priority and read and delivery receopt request:
+Send an email via SMTP with authentication, on an alternate port, a plain text part, html part that has an inline smiley image, a PDF attachment, a high priority and read and delivery receipt request:
 
     use Mail::Sender::Easy qw(email);   
 

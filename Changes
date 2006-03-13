@@ -3,3 +3,7 @@ Revision history for Perl extension Mail::Sender::Easy.
 0.0.1  Thu Dec 29 15:05:06 2005
 	- original version; created by h2xs 1.22 with options
 		-AXc -n Mail::Sender::Easy
+
+0.0.2  Sun Mar 12 08:55:19 2006
+        - Made FQDN code more robust (IE Winders can't do DynaLoader) and userinfo more windows friendly [spine shivers].
+	- POD spelling error fixed
