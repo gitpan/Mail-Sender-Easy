@@ -27,7 +27,7 @@ require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(email);
 
-use version;our $VERSION = qv('0.0.2');
+use version;our $VERSION = qv('0.0.3');
 
 sub email { Mail::Sender->new()->easy(shift()); }
 
@@ -37,6 +37,16 @@ sub Mail::Sender::easy {
     my $text        = delete $mail_ref->{'_text'};
     my $html        = delete $mail_ref->{'_html'};
     my $attachments = delete $mail_ref->{'_attachments'};
+
+    my $text_info   = ref $mail_ref->{'_text_info'} eq 'HASH' 
+                      ? delete $mail_ref->{'_text_info'} : {};
+    delete $mail_ref->{'_text_info'} if exists $mail_ref->{'_text_info'};
+    delete $text_info->{$_} for qw(ctype disposition msg);
+
+    my $html_info   = ref $mail_ref->{'_html_info'} eq 'HASH'        
+                      ? delete $mail_ref->{'_html_info'} : {};
+    delete $mail_ref->{'_html_info'} if exists $mail_ref->{'_html_info'};
+    delete $html_info->{$_} for qw(ctype disposition msg);
 
     my $time = time;
     my $user = $^O eq 'MSWin32' ? "(Windows: $<)" : getpwuid($<);
@@ -64,6 +74,7 @@ sub Mail::Sender::easy {
             });
 
             $sndr->Part({
+                %{ $text_info }, 
                 'ctype'       => 'text/plain', 
                 'disposition' => 'NONE', 
 #               'msg'         => "$text$CRLF" 
@@ -71,6 +82,7 @@ sub Mail::Sender::easy {
             $sndr->SendLineEnc($text);
 
             $sndr->Part({
+                %{ $html_info },
                 'ctype'       => 'text/html',  
                 'disposition' => 'NONE', 
 #               'msg'         => "$html$CRLF" 
@@ -82,7 +94,9 @@ sub Mail::Sender::easy {
         elsif(!$html && $attachments) {
             $sndr->OpenMultipart($mail_ref);
             $sndr->Body({
-                'ctype' => 'text/plain',
+                %{ $text_info },
+                'ctype'       => 'text/plain',
+                'disposition' => 'NONE',
 #               'msg'   => $text,
             });
             $sndr->SendLineEnc($text);
@@ -208,6 +222,20 @@ The value is the text/plain part of the message, its the only required one.
 =head3 _html
 
 The value is the text/html part of the message, it is not required.
+
+=head3 _text_info
+
+Value is a hashref of additonal args to Mail::Sender->Part() for text in text and html emails, Mail::Sender->Body() in text with attachement.
+ctype, disposition, msg are ignored since they are set by other means.
+
+The perfect place to set 'encoding' and 'charset'
+
+=head3 _html_info
+
+Value is a hashref of additonal args to Mail::Sender->Part() for html. 
+ctype, disposition, msg are ignored since they are set by other means.
+
+The perfect place to set 'encoding' and 'charset'
 
 =head3 _attachments
 
