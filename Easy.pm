@@ -27,7 +27,7 @@ require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(email);
 
-use version;our $VERSION = qv('0.0.3');
+use version;our $VERSION = qv('0.0.4');
 
 sub email { Mail::Sender->new()->easy(shift()); }
 
@@ -102,7 +102,10 @@ sub Mail::Sender::easy {
             $sndr->SendLineEnc($text);
         } 
         else {
-            $sndr->Open($mail_ref);
+            $sndr->Open({
+                %{ $text_info },
+                %{ $mail_ref },
+            });
             $sndr->SendLineEnc($text);
         }
 
