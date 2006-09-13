@@ -13,3 +13,6 @@ Revision history for Perl extension Mail::Sender::Easy.
 	
 0.0.4  Tue Aug 15 08:37:25 2006
     - fixed plain text only emails use _text_info
+
+0.0.5  Wed Sep 14 11:33:57 2006
+	- re bundled without Mac's ._ files in the tarball

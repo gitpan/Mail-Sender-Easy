@@ -27,7 +27,7 @@ require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(email);
 
-use version;our $VERSION = qv('0.0.4');
+use version;our $VERSION = qv('0.0.5');
 
 sub email { Mail::Sender->new()->easy(shift()); }
 
